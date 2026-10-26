@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arte Contemporáneo | Dinámica</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+  body{background:#f7f5f2;transition:.3s}
+  body.dark{background:#0e0e0e;color:#eee}
+  header{padding:60px 20px;text-align:center;background:#111;color:#fff;position:sticky;top:0;z-index:10}
+  header h1{letter-spacing:6px;font-weight:300}
+  .controls{max-width:1100px;margin:30px auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 20px}
+  .controls button, .controls input{
+    padding:10px 18px;border-radius:25px;border:1px solid #ccc;background:white;cursor:pointer;transition:.2s
+  }
+  .controls button.active{background:#111;color:#fff}
+  body.dark .controls button, body.dark .controls input{background:#222;color:#fff;border-color:#333}
+  .galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px;max-width:1100px;margin:0 auto;padding:20px}
+  .card{background:#fff;border-radius:18px;overflow:hidden;cursor:pointer;box-shadow:0 8px 25px rgba(0,0,0,.07);transition:.3s}
+  body.dark .card{background:#1a1a1a}
+  .card:hover{transform:translateY(-6px) scale(1.02)}
+  .card img{width:100%;height:230px;object-fit:cover}
+  .card .info{padding:18px}
+  .tag{font-size:10px;letter-spacing:2px;color:#fff;background:#111;padding:4px 10px;border-radius:10px}
+  body.dark .tag{background:#fff;color:#000}
+  
+  /* Modal dinámico */
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  #modal.active{display:flex}
+  #modalContent{background:#fff;max-width:700px;width:100%;border-radius:20px;overflow:hidden;animation:pop .3s}
+  body.dark #modalContent{background:#1a1a1a}
+  #modalContent img{width:100%;height:350px;object-fit:cover}
+  #modalContent .txt{padding:25px}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .close{position:absolute;top:20px;right:30px;font-size:40px;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ARTE CONTEMPORÁNEO VIVO</h1>
+  <p id="contador">Cargando obras...</p>
+</header>
+
+<div class="controls">
+  <input type="text" id="buscador" placeholder="Buscar: Banksy, Frida, digital...">
+  <button class="active" data-filtro="todo">Todo</button>
+  <button data-filtro="conceptual">Conceptual</button>
+  <button data-filtro="urbano">Urbano</button>
+  <button data-filtro="digital">Digital</button>
+  <button data-filtro="feminista">Feminista</button>
+  <button id="darkBtn">🌙 Modo Oscuro</button>
+</div>
+
+<div class="galeria" id="galeria"></div>
+
+<div id="modal">
+  <span class="close" id="cerrar">&times;</span>
+  <div id="modalContent"></div>
+</div>
+
+<script>
+// BASE DE DATOS DINÁMICA - aquí es lo dinámico
+const obras = [
+  {id:1, titulo:"Campbell's Soup", autor:"Andy Warhol", año:1962, tipo:"conceptual", img:"https://images.unsplash.com/photo-1541961017774-22349e4a1262", desc:"El pop art convierte lo cotidiano en icono. Warhol cuestiona el consumo masivo."},
+  {id:2, titulo:"Girl with Balloon", autor:"Banksy", año:2002, tipo:"urbano", img:"https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8", desc:"Arte en la calle, efímero y político. Banksy critica el sistema desde el anonimato."},
+  {id:3, titulo:"Infinity Rooms", autor:"Yayoi Kusama", año:2013, tipo:"feminista", img:"https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8", desc:"Instalación inmersiva. Obsesión, feminismo y salud mental en espejos infinitos."},
+  {id:4, titulo:"Everydays", autor:"Beeple", año:2021, tipo:"digital", img:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe", desc:"Vendido por $69M en NFT. El arte digital entra al mercado del arte contemporáneo."},
+  {id:5, titulo:"The Artist is Present", autor:"Marina Abramović", año:2010, tipo:"conceptual", img:"https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5", desc:"Performance de 736 horas mirando a desconocidos. El cuerpo como obra."},
+  {id:6, titulo:"Luchas Campesinas - Intervención", autor:"Colectivo Zapata", año:2024, tipo:"urbano", img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9", desc:"Mural que conecta tu tema de luchas campesinas del siglo XIX con el arte actual."}
+];
+
+const galeria = document.getElementById('galeria');
+const buscador = document.getElementById('buscador');
+const contador = document.getElementById('contador');
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+
+function pintar(lista){
+  galeria.innerHTML = "";
+  lista.forEach(o=>{
+    galeria.innerHTML += `
+      <div class="card" onclick="abrirModal(${o.id})">
+        <img src="${o.img}">
+        <div class="info">
+          <span class="tag">${o.tipo.toUpperCase()} • ${o.año}</span>
+          <h3>${o.titulo}</h3>
+          <p style="color:#888;margin-top:5px">${o.autor}</p>
+        </div>
+      </div>`;
+  });
+  contador.textContent = `${lista.length} obras encontradas • Arte vivo desde 1962`;
+}
+
+function abrirModal(id){
+  const o = obras.find(x=>x.id===id);
+  modalContent.innerHTML = `
+    <img src="${o.img}">
+    <div class="txt">
+      <h2>${o.titulo} (${o.año})</h2>
+      <p style="color:#888;margin:10px 0">${o.autor} — ${o.tipo}</p>
+      <p style="line-height:1.7">${o.desc}</p>
+      <br><small>💡 Esta es la parte DINÁMICA: el contenido viene de JavaScript, no de HTML fijo.</small>
+    </div>`;
+  modal.classList.add('active');
+}
+
+// Filtros dinámicos
+document.querySelectorAll('[data-filtro]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-filtro]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filtro;
+    pintar(f==='todo' ? obras : obras.filter(o=>o.tipo===f));
+  });
+});
+
+// Buscador en vivo
+buscador.addEventListener('input', ()=>{
+  const t = buscador.value.toLowerCase();
+  pintar(obras.filter(o=> o.titulo.toLowerCase().includes(t) || o.autor.toLowerCase().includes(t) || o.tipo.includes(t)));
+});
+
+// Modo oscuro
+document.getElementById('darkBtn').addEventListener('click', ()=> document.body.classList.toggle('dark'));
+
+// Cerrar modal
+document.getElementById('cerrar').addEventListener('click', ()=> modal.classList.remove('active'));
+modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.remove('active') });
+
+// Inicio
+pintar(obras);
+</script>
+</body>
+</html>
